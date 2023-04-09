@@ -1,5 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></mule>
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ed3efe7d-0dd3-435e-b19c-69c031f2a3e7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="f091e751-22f8-482c-a66b-977d54d739f9" >
+		<wsc:connection wsdlLocation="http://www.dneonline.com/calculator.asmx?wsdl" service="Calculator" port="CalculatorSoap" address="http://www.dneonline.com/calculator.asmx" >
+			<wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
+		</wsc:connection>
+	</wsc:config>
+	<flow name="soap-senariosFlow" doc:id="66928147-9f82-418b-a4c1-0c3f37d909d1" >
+		<http:listener doc:name="Listener" doc:id="16dcc970-fc77-4d0e-bac2-96778fc2b5e6" config-ref="HTTP_Listener_config" path="addition"/>
+		<set-variable value="#[attributes.queryParams.number1]" doc:name="Set Variable" doc:id="a70781ee-a516-4bbd-bc22-d593c9d4599f" variableName="num1"/>
+		<set-variable value="#[attributes.queryParams.number2]" doc:name="Set Variable" doc:id="c9ff6327-cecf-4b52-8b4a-3dc6863f35d0" variableName="num2"/>
+		<ee:transform doc:name="Transform Message" doc:id="23679a88-05f2-4b7b-9394-bb827d7af726">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://tempuri.org/
+---
+{
+	ns0#Add: {
+		ns0#intA: vars.num1 as Number,
+		ns0#intB: vars.num2 as Number
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Add" doc:name="Consume" doc:id="536942b3-d6a5-41e8-9914-3497b1da6f29" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="74620a9f-7b92-41c5-989c-1b03184bd207" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="soap-senariosFlow1" doc:id="16adba77-beec-455e-bbc9-4c8c2f7b60a9" >
+		<http:listener doc:name="Listener" doc:id="430ebc85-4bb5-49a2-9fe1-65edc3781e2e" config-ref="HTTP_Listener_config" path="subtraction"/>
+		<set-variable value="#[attributes.queryParams.number1]" doc:name="Set Variable" doc:id="8937f228-fdaa-41fa-9267-03e4f13573bd" variableName="num1" />
+		<set-variable value="#[attributes.queryParams.number2]" doc:name="Set Variable1" doc:id="4609e06b-64da-42f4-a119-59b103d4b044" variableName="num2" />
+		<ee:transform doc:name="Transform Message" doc:id="877acfeb-0d65-48cd-aced-e1bb677a7a3d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://tempuri.org/
+---
+{
+	ns0#Subtract: {
+		ns0#intA: vars.num1 as Number,
+		ns0#intB: vars.num2 as Number
+	}	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Subtract" doc:name="Consume" doc:id="315816d2-f36b-4a9e-af5c-5eec943c7238" config-ref="Web_Service_Consumer_Config" />
+		<ee:transform doc:name="Transform Message1" doc:id="fde96085-7ec4-4f04-bb80-ea42dacb3d83" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
